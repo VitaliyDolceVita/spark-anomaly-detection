@@ -3,36 +3,48 @@ from pyspark.sql.functions import col, mean, stddev
 import pandas as pd
 import matplotlib.pyplot as plt
 
-spark = SparkSession.builder.appName("AnomalyDetection").getOrCreate() # Створення Spark-сесії
+# Create a Spark session
+spark = SparkSession.builder.appName("AnomalyDetection").getOrCreate()
 
-file_path = "transactions.csv"  #  Завантаження даних
+# Load data from a CSV file
+file_path = "transactions.csv"
 df = spark.read.csv(file_path, header=True, inferSchema=True)
 
-df = df.dropna()  # Очищення та обробка даних
+# Clean the data by removing rows with missing values
+df = df.dropna()
 
-stats = df.select(mean(col("amount")).alias("mean"), stddev(col("amount")).alias("stddev")).collect()  #  Обчислення статистичних метрик
+# Calculate statistical metrics (mean and standard deviation) for the "amount" column
+stats = df.select(mean(col("amount")).alias("mean"), stddev(col("amount")).alias("stddev")).collect()
 mean_value = stats[0]["mean"]
 stddev_value = stats[0]["stddev"]
 
-anomaly_threshold = mean_value + 3 * stddev_value  # Виявлення аномальних транзакцій (більше 3 стандартних відхилень)
+# Define the anomaly threshold (3 standard deviations above the mean)
+anomaly_threshold = mean_value + 3 * stddev_value
+
+# Detect anomalies (transactions exceeding the threshold)
 anomalies = df.filter(col("amount") > anomaly_threshold)
 
-print("Аномальні транзакції:")  # Виведення результатів
+# Display the anomalies
+print("Anomalous Transactions:")
 anomalies.show()
 
-anomalies.write.csv("anomalies.csv", header=True, mode="overwrite") # Збереження аномалій
+# Save the anomalies to a CSV file
+anomalies.write.csv("anomalies.csv", header=True, mode="overwrite")
 
-pandas_df = df.select("amount").toPandas()  #  Візуалізація
+# Convert Spark DataFrames to Pandas DataFrames for visualization
+pandas_df = df.select("amount").toPandas()
 pandas_anomalies = anomalies.select("amount").toPandas()
 
+# Visualize the distribution of transactions and anomalies
 plt.figure(figsize=(10, 6))
-plt.hist(pandas_df["amount"], bins=50, alpha=0.5, label="Звичайні транзакції")
-plt.hist(pandas_anomalies["amount"], bins=50, alpha=0.9, color='red', label="Аномалії")
-plt.axvline(anomaly_threshold, color='black', linestyle='dashed', linewidth=2, label="Поріг аномалій")
-plt.xlabel("Сума транзакції")
-plt.ylabel("Кількість")
-plt.title("Розподіл транзакцій та аномалії")
+plt.hist(pandas_df["amount"], bins=50, alpha=0.5, label="Normal Transactions")
+plt.hist(pandas_anomalies["amount"], bins=50, alpha=0.9, color='red', label="Anomalies")
+plt.axvline(anomaly_threshold, color='black', linestyle='dashed', linewidth=2, label="Anomaly Threshold")
+plt.xlabel("Transaction Amount")
+plt.ylabel("Count")
+plt.title("Transaction Distribution and Anomalies")
 plt.legend()
 plt.show()
 
-spark.stop()  # Завершення сесії
+# Stop the Spark session
+spark.stop()
