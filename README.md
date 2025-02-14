@@ -16,8 +16,6 @@ Apache Spark (version 3.x or higher)
 
 Python (version 3.7 or higher)
 
-Java (version 8 or higher)
-
 Python libraries:
 
 pyspark
