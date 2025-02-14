@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 spark = SparkSession.builder.appName("AnomalyDetection").getOrCreate() # Створення Spark-сесії
 
-file_path = "data/transactions.csv"  #  Завантаження даних
+file_path = "transactions.csv"  #  Завантаження даних
 df = spark.read.csv(file_path, header=True, inferSchema=True)
 
 df = df.dropna()  # Очищення та обробка даних
@@ -20,7 +20,7 @@ anomalies = df.filter(col("amount") > anomaly_threshold)
 print("Аномальні транзакції:")  # Виведення результатів
 anomalies.show()
 
-anomalies.write.csv("data/anomalies.csv", header=True, mode="overwrite") # Збереження аномалій
+anomalies.write.csv("anomalies.csv", header=True, mode="overwrite") # Збереження аномалій
 
 pandas_df = df.select("amount").toPandas()  #  Візуалізація
 pandas_anomalies = anomalies.select("amount").toPandas()
